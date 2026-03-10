@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lernify X - Learning Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        .notification {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .notification-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .streak-fire {
+            animation: flicker 1s infinite alternate;
+        }
+        @keyframes flicker {
+            0% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-full">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg border-b-2 border-indigo-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-indigo-600">🚀 Lernify X</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="userInfo" class="hidden items-center space-x-4">
+                        <div id="notificationBell" class="relative cursor-pointer" onclick="toggleNotifications()">
+                            <div class="text-2xl">🔔</div>
+                            <div id="notificationBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center notification-badge">
+                                <span id="notificationCount">0</span>
+                            </div>
+                        </div>
+                        <div id="streakDisplay" class="hidden bg-orange-100 px-3 py-1 rounded-full">
+                            <span class="streak-fire">🔥</span>
+                            <span id="streakCount" class="font-bold text-orange-600">0</span>
+                        </div>
+                        <span id="welcomeText" class="text-gray-700 font-medium"></span>
+                        <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            Logout
+                        </button>
+                    </div>
+                    <div id="authButtons" class="flex space-x-2">
+                        <button id="loginBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            Login
+                        </button>
+                        <button id="registerBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            Register
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Notification Dropdown -->
+    <div id="notificationDropdown" class="hidden fixed top-16 right-4 bg-white rounded-lg shadow-xl border w-80 z-50">
+        <div class="p-4 border-b">
+            <h3 class="font-semibold text-gray-800">Notifications</h3>
+        </div>
+        <div id="notificationList" class="max-h-64 overflow-y-auto">
+            <!-- Notifications will be populated here -->
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Role Selection Screen -->
+        <div id="roleSelection" class="min-h-screen flex items-center justify-center gradient-bg">
+            <div class="auth-card rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome to Lernify X</h2>
+                    <p class="text-gray-600">Choose your role to continue</p>
+                </div>
+                <div class="space-y-4">
+                    <button id="selectStudent" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg">
+                        <div class="text-2xl mb-2">🎓</div>
+                        I'm a Student
+                    </button>
+                    <button id="selectTeacher" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 px-6 rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg">
+                        <div class="text-2xl mb-2">👨‍🏫</div>
+                        I'm a Teacher
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Auth Screen -->
+        <div id="authScreen" class="hidden min-h-screen flex items-center justify-center gradient-bg">
+            <div class="auth-card rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+                <div class="text-center mb-8">
+                    <button id="backToRoleSelection" class="text-indigo-600 hover:text-indigo-800 mb-4">← Back</button>
+                    <div id="roleIcon" class="text-4xl mb-4"></div>
+                    <h2 id="authTitle" class="text-3xl font-bold text-gray-800 mb-2"></h2>
+                    <p id="authSubtitle" class="text-gray-600"></p>
+                </div>
+                
+                <!-- Login Form -->
+                <form id="loginForm" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <input type="email" id="loginEmail" required class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="loginPassword" required class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg">
+                        Sign In
+                    </button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" class="hidden space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                        <input type="text" id="regName" required class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <input type="email" id="regEmail" required class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="regPassword" required class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                        <input type="password" id="regConfirmPassword" required class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg">
+                        Create Account
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <button id="toggleAuthMode" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                        <span id="toggleAuthText">Don't have an account? Sign up</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Welcome Section -->
+        <div id="welcomeSection" class="hidden text-center mb-8">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">Welcome to Lernify X</h2>
+            <p class="text-xl text-gray-600 mb-8">Your comprehensive learning management platform</p>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl mb-4">📚</div>
+                    <h3 class="text-lg font-semibold mb-2">Course Management</h3>
+                    <p class="text-gray-600">Create and manage courses with ease</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl mb-4">✍️</div>
+                    <h3 class="text-lg font-semibold mb-2">Assignment System</h3>
+                    <p class="text-gray-600">Submit and grade assignments efficiently</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl mb-4">💬</div>
+                    <h3 class="text-lg font-semibold mb-2">Discussion Forums</h3>
+                    <p class="text-gray-600">Engage in meaningful discussions</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboardContent" class="hidden">
+            <!-- Teacher Dashboard -->
+            <div id="teacherDashboard" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900">Teacher Dashboard</h2>
+                    <button id="createCourseBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                        ➕ Create Course
+                    </button>
+                </div>
+                
+                <div class="grid lg:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold mb-4 text-indigo-600">📊 Quick Stats</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span>Total Courses:</span>
+                                <span id="totalCourses" class="font-semibold">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Total Students:</span>
+                                <span id="totalStudents" class="font-semibold">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Pending Submissions:</span>
+                                <span id="pendingSubmissions" class="font-semibold">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold mb-4 text-green-600">🎯 Quick Actions</h3>
+                        <div class="space-y-3">
+                            <button id="viewSubmissionsBtn" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition-colors">
+                                View All Submissions
+                            </button>
+                            <button id="manageCoursesBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors">
+                                Manage Courses
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-xl font-semibold mb-4">My Courses</h3>
+                    <div id="teacherCourses" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Teacher courses will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Dashboard -->
+            <div id="studentDashboard" class="hidden">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">Student Dashboard</h2>
+                
+                <div class="grid lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold mb-4 text-blue-600">📚 My Courses</h3>
+                        <div class="text-3xl font-bold text-blue-600" id="enrolledCount">0</div>
+                        <p class="text-gray-600">Enrolled Courses</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold mb-4 text-yellow-600">📝 Assignments</h3>
+                        <div class="text-3xl font-bold text-yellow-600" id="assignmentCount">0</div>
+                        <p class="text-gray-600">Pending Assignments</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold mb-4 text-green-600">🏆 Average Grade</h3>
+                        <div class="text-3xl font-bold text-green-600" id="averageGrade">-</div>
+                        <p class="text-gray-600">Overall Performance</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-semibold mb-4 text-orange-600">🔥 Streak</h3>
+                        <div class="text-3xl font-bold text-orange-600" id="dashboardStreak">0</div>
+                        <p class="text-gray-600">Days On Time</p>
+                    </div>
+                </div>
+
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h3 class="text-xl font-semibold mb-4">Available Courses</h3>
+                        <div id="availableCourses" class="space-y-4">
+                            <!-- Available courses will be populated here -->
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h3 class="text-xl font-semibold mb-4">My Enrolled Courses</h3>
+                        <div id="enrolledCourses" class="space-y-4">
+                            <!-- Enrolled courses will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Detail View -->
+        <div id="courseDetailView" class="hidden">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <button id="backToDashboard" class="text-indigo-600 hover:text-indigo-800 mb-4">← Back to Dashboard</button>
+                        <div class="flex items-center space-x-4 mb-2">
+                            <h2 id="courseTitle" class="text-3xl font-bold text-gray-900"></h2>
+                            <button id="editCourseBtn" class="hidden text-indigo-600 hover:text-indigo-800">✏️ Edit</button>
+                        </div>
+                        <p id="courseDescription" class="text-gray-600 mb-4"></p>
+                        <div class="flex items-center space-x-4 text-sm text-gray-500">
+                            <span id="courseDuration"></span>
+                            <span id="courseEnrollment"></span>
+                        </div>
+                    </div>
+                    <div id="courseActions" class="space-x-2">
+                        <!-- Course-specific actions will be populated here -->
+                    </div>
+                </div>
+
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-4">📝 Assignments</h3>
+                            <div id="courseAssignments" class="space-y-4">
+                                <!-- Assignments will be populated here -->
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-4">💬 Discussion Forum</h3>
+                            <div id="discussionForum" class="bg-gray-50 rounded-lg p-4">
+                                <div id="forumPosts" class="space-y-4 mb-4">
+                                    <!-- Forum posts will be populated here -->
+                                </div>
+                                <div class="border-t pt-4">
+                                    <textarea id="newPostText" placeholder="Share your thoughts or ask a question..." class="w-full p-3 border rounded-lg resize-none" rows="3"></textarea>
+                                    <button id="postMessageBtn" class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                        Post Message
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                            <h4 class="font-semibold mb-3">📚 Course Materials</h4>
+                            <div id="courseMaterials" class="space-y-2">
+                                <!-- Course materials will be populated here -->
+                            </div>
+                            <div id="uploadMaterialSection" class="hidden mt-4 pt-4 border-t">
+                                <input type="file" id="materialFile" accept=".pdf,.ppt,.pptx,.doc,.docx" class="mb-2">
+                                <button id="uploadMaterialBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors">
+                                    Upload Material
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="enrolledStudentsList" class="hidden bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold mb-3">👥 Enrolled Students</h4>
+                            <div id="studentsList" class="space-y-2">
+                                <!-- Students list will be populated here -->
+                            </div>
+                        </div>
+
+                        <div id="studentGrades" class="hidden bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold mb-3">🏆 My Grades</h4>
+                            <div id="gradesList" class="space-y-2">
+                                <!-- Grades will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submissions View -->
+        <div id="submissionsView" class="hidden">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <button id="backFromSubmissions" class="text-indigo-600 hover:text-indigo-800 mb-4">← Back to Dashboard</button>
+                        <h2 class="text-3xl font-bold text-gray-900">Assignment Submissions</h2>
+                    </div>
+                </div>
+                <div id="submissionsList" class="space-y-4">
+                    <!-- Submissions will be populated here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Create Course Modal -->
+    <div id="createCourseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 fade-in">
+            <h3 class="text-2xl font-bold mb-6 text-center">Create New Course</h3>
+            <form id="createCourseForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Course Title</label>
+                    <input type="text" id="courseTitle" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="courseDesc" required rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Duration (weeks)</label>
+                    <input type="number" id="courseDurationInput" required min="1" max="52" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="cancelCreateCourse" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg transition-colors">
+                        Create Course
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Course Modal -->
+    <div id="editCourseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 fade-in">
+            <h3 class="text-2xl font-bold mb-6 text-center">Edit Course</h3>
+            <form id="editCourseForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Course Title</label>
+                    <input type="text" id="editCourseTitle" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="editCourseDesc" required rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Duration (weeks)</label>
+                    <input type="number" id="editCourseDuration" required min="1" max="52" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="cancelEditCourse" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg transition-colors">
+                        Update Course
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Assignment Modal -->
+    <div id="createAssignmentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 fade-in">
+            <h3 class="text-2xl font-bold mb-6 text-center">Create Assignment</h3>
+            <form id="createAssignmentForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Assignment Title</label>
+                    <input type="text" id="assignmentTitle" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="assignmentDesc" required rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                    <input type="date" id="assignmentDueDate" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Max Points</label>
+                    <input type="number" id="assignmentMaxPoints" required min="1" max="1000" value="10" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="cancelCreateAssignment" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg transition-colors">
+                        Create Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Assignment Modal -->
+    <div id="editAssignmentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 fade-in">
+            <h3 class="text-2xl font-bold mb-6 text-center">Edit Assignment</h3>
+            <form id="editAssignmentForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Assignment Title</label>
+                    <input type="text" id="editAssignmentTitle" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="editAssignmentDesc" required rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                    <input type="date" id="editAssignmentDueDate" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Max Points</label>
+                    <input type="number" id="editAssignmentMaxPoints" required min="1" max="1000" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="cancelEditAssignment" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg transition-colors">
+                        Update Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Submit Assignment Modal -->
+    <div id="submitAssignmentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 fade-in">
+            <h3 class="text-2xl font-bold mb-6 text-center">Submit Assignment</h3>
+            <form id="submitAssignmentForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Assignment</label>
+                    <input type="text" id="submissionAssignmentTitle" readonly class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+                    <textarea id="submissionText" rows="3" placeholder="Add any notes about your submission..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Assignment File (Required) *</label>
+                    <input type="file" id="submissionFile" required accept=".pdf,.doc,.docx,.ppt,.pptx" class="w-full p-3 border border-gray-300 rounded-lg">
+                    <p class="text-xs text-gray-500 mt-1">Accepted formats: PDF, DOC, DOCX, PPT, PPTX</p>
+                </div>
+                <div id="submissionWarning" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    <p class="text-sm font-medium">⚠️ Plagiarism Warning</p>
+                    <p class="text-xs">Similar content detected. You have <span id="attemptsLeft"></span> attempts remaining.</p>
+                </div>
+                <div id="plagiarismStatus" class="hidden bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+                    <p class="text-sm">🔍 Checking for plagiarism... Please wait.</p>
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="cancelSubmitAssignment" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition-colors">
+                        Submit Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Grade Assignment Modal -->
+    <div id="gradeAssignmentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-lg w-full mx-4 fade-in">
+            <h3 class="text-2xl font-bold mb-6 text-center">Grade Assignment</h3>
+            <div id="gradeAssignmentContent" class="space-y-4">
+                <!-- Grading content will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2">
+        <!-- Notifications will be added here -->
+    </div>
+
+    <script>
+        // Application State
+        let currentUser = null;
+        let selectedRole = null;
+        let users = JSON.parse(localStorage.getItem('lms_users') || '[]');
+        let courses = JSON.parse(localStorage.getItem('lms_courses') || '[]');
+        let enrollments = JSON.parse(localStorage.getItem('lms_enrollments') || '[]');
+        let assignments = JSON.parse(localStorage.getItem('lms_assignments') || '[]');
+        let submissions = JSON.parse(localStorage.getItem('lms_submissions') || '[]');
+        let grades = JSON.parse(localStorage.getItem('lms_grades') || '[]');
+        let forumPosts = JSON.parse(localStorage.getItem('lms_forum_posts') || '[]');
+        let materials = JSON.parse(localStorage.getItem('lms_materials') || '[]');
+        let notifications = JSON.parse(localStorage.getItem('lms_notifications') || '[]');
+        let plagiarismAttempts = JSON.parse(localStorage.getItem('lms_plagiarism_attempts') || '{}');
+        let streaks = JSON.parse(localStorage.getItem('lms_streaks') || '{}');
+        let currentCourse = null;
+        let currentAssignment = null;
+        let currentEditingAssignment = null;
+        let isLoginMode = true;
+
+        // Utility Functions
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function saveData() {
+            localStorage.setItem('lms_users', JSON.stringify(users));
+            localStorage.setItem('lms_courses', JSON.stringify(courses));
+            localStorage.setItem('lms_enrollments', JSON.stringify(enrollments));
+            localStorage.setItem('lms_assignments', JSON.stringify(assignments));
+            localStorage.setItem('lms_submissions', JSON.stringify(submissions));
+            localStorage.setItem('lms_grades', JSON.stringify(grades));
+            localStorage.setItem('lms_forum_posts', JSON.stringify(forumPosts));
+            localStorage.setItem('lms_materials', JSON.stringify(materials));
+            localStorage.setItem('lms_notifications', JSON.stringify(notifications));
+            localStorage.setItem('lms_plagiarism_attempts', JSON.stringify(plagiarismAttempts));
+            localStorage.setItem('lms_streaks', JSON.stringify(streaks));
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification p-4 rounded-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} shadow-lg`;
+            notification.textContent = message;
+            
+            document.getElementById('notifications').appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function showView(viewId) {
+            // Hide all main views
+            document.getElementById('roleSelection').classList.add('hidden');
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('welcomeSection').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.add('hidden');
+            document.getElementById('courseDetailView').classList.add('hidden');
+            document.getElementById('submissionsView').classList.add('hidden');
+            
+            // Show requested view
+            document.getElementById(viewId).classList.remove('hidden');
+        }
+
+        // Authentication Functions
+        function selectRole(role) {
+            selectedRole = role;
+            showAuthScreen();
+        }
+
+        function showAuthScreen() {
+            showView('authScreen');
+            const roleIcon = document.getElementById('roleIcon');
+            const authTitle = document.getElementById('authTitle');
+            const authSubtitle = document.getElementById('authSubtitle');
+            
+            if (selectedRole === 'student') {
+                roleIcon.textContent = '🎓';
+                authTitle.textContent = isLoginMode ? 'Student Login' : 'Student Registration';
+                authSubtitle.textContent = isLoginMode ? 'Sign in to access your courses' : 'Create your student account';
+            } else {
+                roleIcon.textContent = '👨‍🏫';
+                authTitle.textContent = isLoginMode ? 'Teacher Login' : 'Teacher Registration';
+                authSubtitle.textContent = isLoginMode ? 'Sign in to manage your courses' : 'Create your teacher account';
+            }
+            
+            updateAuthForm();
+            
+            // Load saved email if exists
+            const savedEmail = localStorage.getItem('lms_saved_email');
+            if (savedEmail && isLoginMode) {
+                document.getElementById('loginEmail').value = savedEmail;
+            }
+        }
+
+        function updateAuthForm() {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const toggleText = document.getElementById('toggleAuthText');
+            
+            if (isLoginMode) {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                toggleText.textContent = "Don't have an account? Sign up";
+            } else {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                toggleText.textContent = "Already have an account? Sign in";
+            }
+        }
+
+        function register(name, email, password, confirmPassword) {
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match!', 'error');
+                return false;
+            }
+            
+            if (users.find(u => u.email === email)) {
+                showNotification('Email already exists! Please use a different email address.', 'error');
+                return false;
+            }
+            
+            const user = {
+                id: generateId(),
+                name,
+                email,
+                password, // In real app, this would be hashed
+                role: selectedRole,
+                createdAt: new Date().toISOString()
+            };
+            
+            users.push(user);
+            
+            // Initialize streak for students
+            if (selectedRole === 'student') {
+                streaks[user.id] = 0;
+            }
+            
+            saveData();
+            showNotification('Registration successful!');
+            
+            // Auto login after registration
+            currentUser = user;
+            localStorage.setItem('lms_saved_email', email);
+            updateUI();
+            return true;
+        }
+
+        function login(email, password) {
+            const user = users.find(u => u.email === email && u.password === password && u.role === selectedRole);
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('lms_saved_email', email);
+                updateUI();
+                showNotification(`Welcome back, ${user.name}!`);
+                return true;
+            }
+            showNotification('Invalid credentials or wrong role selected!', 'error');
+            return false;
+        }
+
+        function logout() {
+            currentUser = null;
+            selectedRole = null;
+            showView('roleSelection');
+            showNotification('Logged out successfully!');
+        }
+
+        // UI Update Functions
+        function updateUI() {
+            const authButtons = document.getElementById('authButtons');
+            const userInfo = document.getElementById('userInfo');
+            const welcomeText = document.getElementById('welcomeText');
+            
+            if (currentUser) {
+                authButtons.classList.add('hidden');
+                userInfo.classList.remove('hidden');
+                userInfo.classList.add('flex');
+                welcomeText.textContent = `Welcome, ${currentUser.name} (${currentUser.role})`;
+                
+                showView('dashboardContent');
+                if (currentUser.role === 'teacher') {
+                    showTeacherDashboard();
+                } else {
+                    showStudentDashboard();
+                }
+                
+                updateNotifications();
+                updateStreakDisplay();
+            } else {
+                authButtons.classList.remove('hidden');
+                userInfo.classList.add('hidden');
+                userInfo.classList.remove('flex');
+                showView('roleSelection');
+            }
+        }
+
+        // Notification System
+        function addNotification(userId, message, type = 'info') {
+            const notification = {
+                id: generateId(),
+                userId,
+                message,
+                type,
+                read: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            notifications.push(notification);
+            saveData();
+            updateNotifications();
+        }
+
+        function updateNotifications() {
+            if (!currentUser) return;
+            
+            const userNotifications = notifications.filter(n => n.userId === currentUser.id && !n.read);
+            const notificationBadge = document.getElementById('notificationBadge');
+            const notificationCount = document.getElementById('notificationCount');
+            
+            if (userNotifications.length > 0) {
+                notificationBadge.classList.remove('hidden');
+                notificationCount.textContent = userNotifications.length;
+            } else {
+                notificationBadge.classList.add('hidden');
+            }
+            
+            // Check for assignment deadlines (12 hours before)
+            if (currentUser.role === 'student') {
+                checkAssignmentDeadlines();
+            }
+        }
+
+        function checkAssignmentDeadlines() {
+            const studentEnrollments = enrollments.filter(e => e.studentId === currentUser.id);
+            const studentAssignments = assignments.filter(a => 
+                studentEnrollments.some(e => e.courseId === a.courseId)
+            );
+            
+            studentAssignments.forEach(assignment => {
+                const dueDate = new Date(assignment.dueDate);
+                const now = new Date();
+                const hoursUntilDue = (dueDate - now) / (1000 * 60 * 60);
+                
+                // Check if assignment is due within 12 hours and not submitted
+                if (hoursUntilDue > 0 && hoursUntilDue <= 12) {
+                    const hasSubmitted = submissions.some(s => 
+                        s.assignmentId === assignment.id && s.studentId === currentUser.id
+                    );
+                    
+                    if (!hasSubmitted) {
+                        const existingNotification = notifications.find(n => 
+                            n.userId === currentUser.id && 
+                            n.message.includes(assignment.title) &&
+                            n.message.includes('due soon')
+                        );
+                        
+                        if (!existingNotification) {
+                            addNotification(
+                                currentUser.id,
+                                `Assignment "${assignment.title}" is due in ${Math.ceil(hoursUntilDue)} hours!`,
+                                'warning'
+                            );
+                        }
+                    }
+                }
+            });
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+            
+            if (!dropdown.classList.contains('hidden')) {
+                renderNotifications();
+            }
+        }
+
+        function renderNotifications() {
+            const container = document.getElementById('notificationList');
+            const userNotifications = notifications.filter(n => n.userId === currentUser.id)
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            if (userNotifications.length === 0) {
+                container.innerHTML = '<p class="p-4 text-gray-500 text-center">No notifications</p>';
+                return;
+            }
+            
+            container.innerHTML = userNotifications.map(notification => `
+                <div class="p-4 border-b ${notification.read ? 'bg-gray-50' : 'bg-blue-50'}" onclick="markNotificationRead('${notification.id}')">
+                    <p class="text-sm ${notification.read ? 'text-gray-600' : 'text-gray-800 font-medium'}">${notification.message}</p>
+                    <p class="text-xs text-gray-500 mt-1">${new Date(notification.createdAt).toLocaleString()}</p>
+                </div>
+            `).join('');
+        }
+
+        function markNotificationRead(notificationId) {
+            const notification = notifications.find(n => n.id === notificationId);
+            if (notification) {
+                notification.read = true;
+                saveData();
+                updateNotifications();
+            }
+        }
+
+        // Streak System
+        function updateStreak(studentId, onTime = true) {
+            if (!streaks[studentId]) {
+                streaks[studentId] = 0;
+            }
+            
+            if (onTime) {
+                streaks[studentId]++;
+            } else {
+                streaks[studentId] = 0;
+            }
+            
+            saveData();
+        }
+
+        function updateStreakDisplay() {
+            if (currentUser && currentUser.role === 'student') {
+                const streak = streaks[currentUser.id] || 0;
+                const streakDisplay = document.getElementById('streakDisplay');
+                const streakCount = document.getElementById('streakCount');
+                const dashboardStreak = document.getElementById('dashboardStreak');
+                
+                if (streak > 0) {
+                    streakDisplay.classList.remove('hidden');
+                    streakCount.textContent = streak;
+                }
+                
+                if (dashboardStreak) {
+                    dashboardStreak.textContent = streak;
+                }
+            }
+        }
+
+        // Plagiarism Detection
+        function checkPlagiarism(content, studentId, assignmentId) {
+            return new Promise((resolve) => {
+                // Simulate plagiarism check delay
+                setTimeout(() => {
+                    const existingSubmissions = submissions.filter(s => 
+                        s.assignmentId === assignmentId && s.studentId !== studentId
+                    );
+                    
+                    // Simple plagiarism check - in real app, this would be more sophisticated
+                    const isPlagiarized = existingSubmissions.some(s => 
+                        s.fileName && content.toLowerCase().includes(s.fileName.toLowerCase().split('.')[0])
+                    );
+                    
+                    resolve(isPlagiarized);
+                }, 2000); // 2 second delay to simulate processing
+            });
+        }
+
+        // Course Management Functions
+        function createCourse(title, description, duration) {
+            const course = {
+                id: generateId(),
+                title,
+                description,
+                duration,
+                teacherId: currentUser.id,
+                teacherName: currentUser.name,
+                createdAt: new Date().toISOString()
+            };
+            
+            courses.push(course);
+            saveData();
+            showNotification('Course created successfully!');
+            updateUI();
+        }
+
+        function editCourse(courseId, title, description, duration) {
+            const course = courses.find(c => c.id === courseId);
+            if (course && course.teacherId === currentUser.id) {
+                course.title = title;
+                course.description = description;
+                course.duration = duration;
+                saveData();
+                showNotification('Course updated successfully!');
+                showCourseDetail(courseId);
+            }
+        }
+
+        function enrollInCourse(courseId) {
+            const enrollment = {
+                id: generateId(),
+                studentId: currentUser.id,
+                courseId,
+                enrolledAt: new Date().toISOString()
+            };
+            
+            enrollments.push(enrollment);
+            saveData();
+            showNotification('Enrolled successfully!');
+            
+            // Add notification to teacher
+            const course = courses.find(c => c.id === courseId);
+            if (course) {
+                addNotification(
+                    course.teacherId,
+                    `${currentUser.name} enrolled in your course "${course.title}"`,
+                    'info'
+                );
+            }
+            
+            updateUI();
+        }
+
+        function isEnrolled(courseId, studentId = currentUser?.id) {
+            return enrollments.some(e => e.courseId === courseId && e.studentId === studentId);
+        }
+
+        // Assignment Functions
+        function createAssignment(courseId, title, description, dueDate, maxPoints) {
+            const assignment = {
+                id: generateId(),
+                courseId,
+                title,
+                description,
+                dueDate,
+                maxPoints,
+                createdAt: new Date().toISOString()
+            };
+            
+            assignments.push(assignment);
+            saveData();
+            showNotification('Assignment created successfully!');
+            
+            // Notify enrolled students
+            const enrolledStudents = enrollments.filter(e => e.courseId === courseId);
+            enrolledStudents.forEach(enrollment => {
+                addNotification(
+                    enrollment.studentId,
+                    `New assignment "${title}" has been posted`,
+                    'info'
+                );
+            });
+            
+            showCourseDetail(courseId);
+        }
+
+        function editAssignment(assignmentId, title, description, dueDate, maxPoints) {
+            const assignment = assignments.find(a => a.id === assignmentId);
+            if (assignment) {
+                assignment.title = title;
+                assignment.description = description;
+                assignment.dueDate = dueDate;
+                assignment.maxPoints = maxPoints;
+                saveData();
+                showNotification('Assignment updated successfully!');
+                
+                // Notify enrolled students about the update
+                const enrolledStudents = enrollments.filter(e => e.courseId === assignment.courseId);
+                enrolledStudents.forEach(enrollment => {
+                    addNotification(
+                        enrollment.studentId,
+                        `Assignment "${title}" has been updated`,
+                        'info'
+                    );
+                });
+                
+                showCourseDetail(assignment.courseId);
+            }
+        }
+
+        async function submitAssignment(assignmentId, submissionText, file) {
+            const assignment = assignments.find(a => a.id === assignmentId);
+            if (!assignment) return;
+            
+            const studentKey = `${currentUser.id}_${assignmentId}`;
+            const attempts = plagiarismAttempts[studentKey] || { count: 0, blocked: false };
+            
+            if (attempts.blocked) {
+                showNotification('You are blocked from submitting this assignment due to repeated plagiarism attempts.', 'error');
+                return;
+            }
+            
+            // Show plagiarism checking status
+            document.getElementById('plagiarismStatus').classList.remove('hidden');
+            
+            // Check for plagiarism
+            const isPlagiarized = await checkPlagiarism(file.name, currentUser.id, assignmentId);
+            
+            document.getElementById('plagiarismStatus').classList.add('hidden');
+            
+            if (isPlagiarized) {
+                attempts.count++;
+                plagiarismAttempts[studentKey] = attempts;
+                
+                if (attempts.count >= 3) {
+                    attempts.blocked = true;
+                    showNotification('You have been blocked from submitting this assignment due to repeated plagiarism attempts.', 'error');
+                } else {
+                    const attemptsLeft = 3 - attempts.count;
+                    document.getElementById('attemptsLeft').textContent = attemptsLeft;
+                    document.getElementById('submissionWarning').classList.remove('hidden');
+                    showNotification(`Plagiarism detected! ${attemptsLeft} attempts remaining.`, 'error');
+                }
+                
+                saveData();
+                return;
+            }
+            
+            // Check if submitted on time for streak
+            const dueDate = new Date(assignment.dueDate);
+            const now = new Date();
+            const onTime = now <= dueDate;
+            
+            const submission = {
+                id: generateId(),
+                assignmentId,
+                studentId: currentUser.id,
+                studentName: currentUser.name,
+                submissionText,
+                fileName: file.name,
+                fileSize: file.size,
+                submittedAt: new Date().toISOString(),
+                graded: false,
+                onTime
+            };
+            
+            submissions.push(submission);
+            
+            // Update streak
+            updateStreak(currentUser.id, onTime);
+            
+            saveData();
+            showNotification('Assignment submitted successfully!');
+            
+            // Notify teacher
+            const course = courses.find(c => c.id === assignment.courseId);
+            if (course) {
+                addNotification(
+                    course.teacherId,
+                    `${currentUser.name} submitted assignment "${assignment.title}"`,
+                    'info'
+                );
+            }
+            
+            hideModal('submitAssignmentModal');
+            showCourseDetail(assignment.courseId);
+        }
+
+        function gradeAssignment(submissionId, points, feedback) {
+            const submission = submissions.find(s => s.id === submissionId);
+            if (submission) {
+                const grade = {
+                    id: generateId(),
+                    submissionId,
+                    assignmentId: submission.assignmentId,
+                    studentId: submission.studentId,
+                    points,
+                    feedback,
+                    gradedAt: new Date().toISOString()
+                };
+                
+                grades.push(grade);
+                submission.graded = true;
+                saveData();
+                showNotification('Assignment graded successfully!');
+                
+                // Notify student
+                const assignment = assignments.find(a => a.id === submission.assignmentId);
+                addNotification(
+                    submission.studentId,
+                    `Your assignment "${assignment.title}" has been graded: ${points}/${assignment.maxPoints}`,
+                    'info'
+                );
+            }
+        }
+
+        // Dashboard Functions
+        function showTeacherDashboard() {
+            document.getElementById('teacherDashboard').classList.remove('hidden');
+            document.getElementById('studentDashboard').classList.add('hidden');
+            
+            const teacherCourses = courses.filter(c => c.teacherId === currentUser.id);
+            const totalStudents = enrollments.filter(e => 
+                teacherCourses.some(c => c.id === e.courseId)
+            ).length;
+            const pendingSubmissions = submissions.filter(s => 
+                !s.graded && teacherCourses.some(c => 
+                    assignments.some(a => a.id === s.assignmentId && a.courseId === c.id)
+                )
+            ).length;
+            
+            document.getElementById('totalCourses').textContent = teacherCourses.length;
+            document.getElementById('totalStudents').textContent = totalStudents;
+            document.getElementById('pendingSubmissions').textContent = pendingSubmissions;
+            
+            renderTeacherCourses();
+        }
+
+        function showStudentDashboard() {
+            document.getElementById('studentDashboard').classList.remove('hidden');
+            document.getElementById('teacherDashboard').classList.add('hidden');
+            
+            const studentEnrollments = enrollments.filter(e => e.studentId === currentUser.id);
+            const studentAssignments = assignments.filter(a => 
+                studentEnrollments.some(e => e.courseId === a.courseId)
+            );
+            const studentSubmissions = submissions.filter(s => s.studentId === currentUser.id);
+            const pendingAssignments = studentAssignments.filter(a => 
+                !studentSubmissions.some(s => s.assignmentId === a.id)
+            );
+            
+            const studentGrades = grades.filter(g => g.studentId === currentUser.id);
+            const averageGrade = studentGrades.length > 0 
+                ? (studentGrades.reduce((sum, g) => sum + g.points, 0) / studentGrades.length).toFixed(1)
+                : '-';
+            
+            document.getElementById('enrolledCount').textContent = studentEnrollments.length;
+            document.getElementById('assignmentCount').textContent = pendingAssignments.length;
+            document.getElementById('averageGrade').textContent = averageGrade;
+            
+            renderAvailableCourses();
+            renderEnrolledCourses();
+        }
+
+        function renderTeacherCourses() {
+            const container = document.getElementById('teacherCourses');
+            const teacherCourses = courses.filter(c => c.teacherId === currentUser.id);
+            
+            if (teacherCourses.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center col-span-full">No courses created yet. Create your first course!</p>';
+                return;
+            }
+            
+            container.innerHTML = teacherCourses.map(course => {
+                const enrollmentCount = enrollments.filter(e => e.courseId === course.id).length;
+                return `
+                    <div class="bg-gray-50 p-4 rounded-lg border hover:shadow-md transition-shadow cursor-pointer" onclick="showCourseDetail('${course.id}')">
+                        <h4 class="font-semibold text-lg mb-2">${course.title}</h4>
+                        <p class="text-gray-600 text-sm mb-3">${course.description}</p>
+                        <div class="flex justify-between items-center text-sm text-gray-500">
+                            <span>📅 ${course.duration} weeks</span>
+                            <span>👥 ${enrollmentCount} students</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAvailableCourses() {
+            const container = document.getElementById('availableCourses');
+            const availableCourses = courses.filter(c => !isEnrolled(c.id));
+            
+            if (availableCourses.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No available courses to enroll in.</p>';
+                return;
+            }
+            
+            container.innerHTML = availableCourses.map(course => `
+                <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <h4 class="font-semibold mb-2">${course.title}</h4>
+                    <p class="text-gray-600 text-sm mb-2">${course.description}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">📅 ${course.duration} weeks</span>
+                        <button onclick="enrollInCourse('${course.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            Enroll
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderEnrolledCourses() {
+            const container = document.getElementById('enrolledCourses');
+            const studentEnrollments = enrollments.filter(e => e.studentId === currentUser.id);
+            const enrolledCourses = courses.filter(c => studentEnrollments.some(e => e.courseId === c.id));
+            
+            if (enrolledCourses.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No enrolled courses yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = enrolledCourses.map(course => `
+                <div class="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer" onclick="showCourseDetail('${course.id}')">
+                    <h4 class="font-semibold mb-2">${course.title}</h4>
+                    <p class="text-gray-600 text-sm mb-2">${course.description}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">📅 ${course.duration} weeks</span>
+                        <span class="text-green-600 text-sm font-medium">✓ Enrolled</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Course Detail Functions
+        function showCourseDetail(courseId) {
+            currentCourse = courses.find(c => c.id === courseId);
+            if (!currentCourse) return;
+            
+            showView('courseDetailView');
+            
+            document.getElementById('courseTitle').textContent = currentCourse.title;
+            document.getElementById('courseDescription').textContent = currentCourse.description;
+            document.getElementById('courseDuration').textContent = `📅 ${currentCourse.duration} weeks`;
+            
+            const enrollmentCount = enrollments.filter(e => e.courseId === courseId).length;
+            document.getElementById('courseEnrollment').textContent = `👥 ${enrollmentCount} students`;
+            
+            renderCourseActions();
+            renderCourseAssignments();
+            renderDiscussionForum();
+            renderCourseMaterials();
+            renderEnrolledStudents();
+            renderStudentGrades();
+        }
+
+        function renderCourseActions() {
+            const container = document.getElementById('courseActions');
+            const editBtn = document.getElementById('editCourseBtn');
+            const isTeacher = currentUser.role === 'teacher' && currentCourse.teacherId === currentUser.id;
+            const isEnrolledStudent = currentUser.role === 'student' && isEnrolled(currentCourse.id);
+            
+            if (isTeacher) {
+                container.innerHTML = `
+                    <button onclick="showCreateAssignmentModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        ➕ Create Assignment
+                    </button>
+                `;
+                editBtn.classList.remove('hidden');
+                document.getElementById('enrolledStudentsList').classList.remove('hidden');
+                document.getElementById('uploadMaterialSection').classList.remove('hidden');
+                document.getElementById('studentGrades').classList.add('hidden');
+            } else if (isEnrolledStudent) {
+                container.innerHTML = '';
+                editBtn.classList.add('hidden');
+                document.getElementById('enrolledStudentsList').classList.add('hidden');
+                document.getElementById('uploadMaterialSection').classList.add('hidden');
+                document.getElementById('studentGrades').classList.remove('hidden');
+            } else {
+                container.innerHTML = `
+                    <button onclick="enrollInCourse('${currentCourse.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        Enroll in Course
+                    </button>
+                `;
+                editBtn.classList.add('hidden');
+                document.getElementById('enrolledStudentsList').classList.add('hidden');
+                document.getElementById('uploadMaterialSection').classList.add('hidden');
+                document.getElementById('studentGrades').classList.add('hidden');
+            }
+        }
+
+        function renderCourseAssignments() {
+            const container = document.getElementById('courseAssignments');
+            const courseAssignments = assignments.filter(a => a.courseId === currentCourse.id);
+            
+            if (courseAssignments.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No assignments yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = courseAssignments.map(assignment => {
+                const isTeacher = currentUser.role === 'teacher' && currentCourse.teacherId === currentUser.id;
+                const studentSubmission = submissions.find(s => s.assignmentId === assignment.id && s.studentId === currentUser.id);
+                const submissionCount = submissions.filter(s => s.assignmentId === assignment.id).length;
+                const grade = grades.find(g => g.assignmentId === assignment.id && g.studentId === currentUser.id);
+                
+                let actionButton = '';
+                let statusInfo = '';
+                let editButton = '';
+                
+                if (isTeacher) {
+                    actionButton = `<button onclick="viewAssignmentSubmissions('${assignment.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm transition-colors">View Submissions (${submissionCount})</button>`;
+                    editButton = `<button onclick="showEditAssignmentModal('${assignment.id}')" class="text-indigo-600 hover:text-indigo-800 text-sm">✏️ Edit</button>`;
+                } else if (currentUser.role === 'student' && isEnrolled(currentCourse.id)) {
+                    if (studentSubmission) {
+                        if (grade) {
+                            statusInfo = `<span class="text-green-600 text-sm">✓ Graded: ${grade.points}/${assignment.maxPoints}</span>`;
+                        } else {
+                            statusInfo = `<span class="text-blue-600 text-sm">✓ Submitted</span>`;
+                        }
+                    } else {
+                        actionButton = `<button onclick="showSubmitAssignmentModal('${assignment.id}')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">Submit</button>`;
+                    }
+                }
+                
+                return `
+                    <div class="border rounded-lg p-4 bg-white">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-semibold">${assignment.title}</h4>
+                            <div class="flex items-center space-x-2">
+                                ${editButton}
+                                ${statusInfo}
+                                ${actionButton}
+                            </div>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-2">${assignment.description}</p>
+                        <div class="flex justify-between items-center text-sm text-gray-500">
+                            <span>📅 Due: ${new Date(assignment.dueDate).toLocaleDateString()}</span>
+                            <span>🏆 ${assignment.maxPoints} points</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDiscussionForum() {
+            const container = document.getElementById('forumPosts');
+            const coursePosts = forumPosts.filter(p => p.courseId === currentCourse.id);
+            
+            if (coursePosts.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center">No discussions yet. Start the conversation!</p>';
+                return;
+            }
+            
+            container.innerHTML = coursePosts.map(post => `
+                <div class="bg-white p-4 rounded-lg border">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-medium text-indigo-600">${post.authorName}</span>
+                        <span class="text-sm text-gray-500">${new Date(post.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p class="text-gray-700">${post.message}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderCourseMaterials() {
+            const container = document.getElementById('courseMaterials');
+            const courseMaterials = materials.filter(m => m.courseId === currentCourse.id);
+            
+            if (courseMaterials.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">No materials uploaded yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = courseMaterials.map(material => `
+                <div class="flex items-center justify-between p-2 bg-white rounded border">
+                    <span class="text-sm">${material.fileName}</span>
+                    <button onclick="downloadMaterial('${material.id}')" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                        📥 Download
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function renderEnrolledStudents() {
+            const container = document.getElementById('studentsList');
+            const courseEnrollments = enrollments.filter(e => e.courseId === currentCourse.id);
+            const enrolledStudents = users.filter(u => courseEnrollments.some(e => e.studentId === u.id));
+            
+            if (enrolledStudents.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">No students enrolled yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = enrolledStudents.map(student => {
+                const streak = streaks[student.id] || 0;
+                return `
+                    <div class="flex items-center justify-between p-2 bg-white rounded border">
+                        <div>
+                            <div class="text-sm font-medium">${student.name}</div>
+                            <div class="text-xs text-gray-500">${student.email}</div>
+                        </div>
+                        <div class="text-xs text-orange-600">🔥 ${streak}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStudentGrades() {
+            const container = document.getElementById('gradesList');
+            const studentGrades = grades.filter(g => g.studentId === currentUser.id);
+            const courseAssignments = assignments.filter(a => a.courseId === currentCourse.id);
+            const relevantGrades = studentGrades.filter(g => 
+                courseAssignments.some(a => a.id === g.assignmentId)
+            );
+            
+            if (relevantGrades.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">No grades yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = relevantGrades.map(grade => {
+                const assignment = assignments.find(a => a.id === grade.assignmentId);
+                return `
+                    <div class="flex items-center justify-between p-2 bg-white rounded border">
+                        <span class="text-sm">${assignment.title}</span>
+                        <span class="text-sm font-semibold">${grade.points}/${assignment.maxPoints}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Assignment Modal Functions
+        function showCreateAssignmentModal() {
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('assignmentDueDate').min = today;
+            showModal('createAssignmentModal');
+        }
+
+        function showEditAssignmentModal(assignmentId) {
+            currentEditingAssignment = assignments.find(a => a.id === assignmentId);
+            if (currentEditingAssignment) {
+                document.getElementById('editAssignmentTitle').value = currentEditingAssignment.title;
+                document.getElementById('editAssignmentDesc').value = currentEditingAssignment.description;
+                document.getElementById('editAssignmentDueDate').value = currentEditingAssignment.dueDate;
+                document.getElementById('editAssignmentMaxPoints').value = currentEditingAssignment.maxPoints;
+                
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('editAssignmentDueDate').min = today;
+                showModal('editAssignmentModal');
+            }
+        }
+
+        function showSubmitAssignmentModal(assignmentId) {
+            currentAssignment = assignments.find(a => a.id === assignmentId);
+            if (currentAssignment) {
+                document.getElementById('submissionAssignmentTitle').value = currentAssignment.title;
+                document.getElementById('submissionText').value = '';
+                document.getElementById('submissionFile').value = '';
+                document.getElementById('submissionWarning').classList.add('hidden');
+                document.getElementById('plagiarismStatus').classList.add('hidden');
+                showModal('submitAssignmentModal');
+            }
+        }
+
+        function viewAssignmentSubmissions(assignmentId) {
+            showView('submissionsView');
+            renderSubmissions(assignmentId);
+        }
+
+        function renderSubmissions(assignmentId = null) {
+            const container = document.getElementById('submissionsList');
+            let relevantSubmissions;
+            
+            if (assignmentId) {
+                relevantSubmissions = submissions.filter(s => s.assignmentId === assignmentId);
+            } else {
+                // Show all submissions for teacher's courses
+                const teacherCourses = courses.filter(c => c.teacherId === currentUser.id);
+                relevantSubmissions = submissions.filter(s => 
+                    teacherCourses.some(c => 
+                        assignments.some(a => a.id === s.assignmentId && a.courseId === c.id)
+                    )
+                );
+            }
+            
+            if (relevantSubmissions.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No submissions found.</p>';
+                return;
+            }
+            
+            container.innerHTML = relevantSubmissions.map(submission => {
+                const assignment = assignments.find(a => a.id === submission.assignmentId);
+                const course = courses.find(c => c.id === assignment.courseId);
+                const grade = grades.find(g => g.submissionId === submission.id);
+                
+                return `
+                    <div class="border rounded-lg p-4 bg-white">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-semibold">${assignment.title}</h4>
+                                <p class="text-sm text-gray-600">${course.title} • ${submission.studentName}</p>
+                                <p class="text-xs text-gray-500">Submitted: ${new Date(submission.submittedAt).toLocaleString()}</p>
+                                ${submission.onTime ? '<span class="text-green-600 text-xs">✓ On Time</span>' : '<span class="text-red-600 text-xs">⚠️ Late</span>'}
+                            </div>
+                            <div class="text-right">
+                                ${grade ? 
+                                    `<div class="text-green-600 font-medium">Graded: ${grade.points}/${assignment.maxPoints}</div>` :
+                                    `<button onclick="showGradeModal('${submission.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm mt-1 transition-colors">Grade</button>`
+                                }
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded">
+                            ${submission.submissionText ? `<p class="text-sm mb-2">${submission.submissionText}</p>` : ''}
+                            <div class="text-sm text-indigo-600">📎 ${submission.fileName} (${(submission.fileSize / 1024).toFixed(1)} KB)</div>
+                        </div>
+                        ${grade ? `
+                            <div class="mt-3 p-3 bg-green-50 rounded">
+                                <div class="text-sm font-medium text-green-800">Feedback:</div>
+                                <div class="text-sm text-green-700">${grade.feedback}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showGradeModal(submissionId) {
+            const submission = submissions.find(s => s.id === submissionId);
+            const assignment = assignments.find(a => a.id === submission.assignmentId);
+            
+            const content = document.getElementById('gradeAssignmentContent');
+            content.innerHTML = `
+                <div class="mb-4">
+                    <h4 class="font-semibold">${assignment.title}</h4>
+                    <p class="text-sm text-gray-600">Student: ${submission.studentName}</p>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Submission:</label>
+                    <div class="bg-gray-50 p-3 rounded text-sm">
+                        ${submission.submissionText || 'No description provided'}
+                        <div class="mt-2 text-indigo-600">📎 ${submission.fileName}</div>
+                    </div>
+                </div>
+                <form id="gradeForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Points (Max: ${assignment.maxPoints})</label>
+                        <input type="number" id="gradePoints" required min="0" max="${assignment.maxPoints}" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Feedback</label>
+                        <textarea id="gradeFeedback" required rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"></textarea>
+                    </div>
+                    <div class="flex space-x-3 pt-4">
+                        <button type="button" onclick="hideModal('gradeAssignmentModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition-colors">
+                            Submit Grade
+                        </button>
+                    </div>
+                </form>
+            `;
+            
+            showModal('gradeAssignmentModal');
+            
+            document.getElementById('gradeForm').onsubmit = function(e) {
+                e.preventDefault();
+                const points = parseInt(document.getElementById('gradePoints').value);
+                const feedback = document.getElementById('gradeFeedback').value;
+                
+                gradeAssignment(submissionId, points, feedback);
+                hideModal('gradeAssignmentModal');
+                renderSubmissions();
+            };
+        }
+
+        // Forum Functions
+        function postMessage() {
+            const messageText = document.getElementById('newPostText').value.trim();
+            if (!messageText) return;
+            
+            const post = {
+                id: generateId(),
+                courseId: currentCourse.id,
+                authorId: currentUser.id,
+                authorName: currentUser.name,
+                message: messageText,
+                createdAt: new Date().toISOString()
+            };
+            
+            forumPosts.push(post);
+            saveData();
+            document.getElementById('newPostText').value = '';
+            renderDiscussionForum();
+            showNotification('Message posted!');
+        }
+
+        // Material Functions
+        function uploadMaterial() {
+            const fileInput = document.getElementById('materialFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showNotification('Please select a file to upload.', 'error');
+                return;
+            }
+            
+            const material = {
+                id: generateId(),
+                courseId: currentCourse.id,
+                fileName: file.name,
+                uploadedAt: new Date().toISOString(),
+                uploadedBy: currentUser.name
+            };
+            
+            materials.push(material);
+            saveData();
+            fileInput.value = '';
+            renderCourseMaterials();
+            showNotification('Material uploaded successfully!');
+        }
+
+        function downloadMaterial(materialId) {
+            const material = materials.find(m => m.id === materialId);
+            if (material) {
+                showNotification(`Downloading ${material.fileName}...`);
+                // In a real app, this would trigger an actual download
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Role selection
+            document.getElementById('selectStudent').onclick = () => selectRole('student');
+            document.getElementById('selectTeacher').onclick = () => selectRole('teacher');
+            document.getElementById('backToRoleSelection').onclick = () => showView('roleSelection');
+            
+            // Auth toggle
+            document.getElementById('toggleAuthMode').onclick = () => {
+                isLoginMode = !isLoginMode;
+                updateAuthForm();
+            };
+            
+            // Auth buttons
+            document.getElementById('loginBtn').onclick = () => {
+                selectedRole = 'student';
+                isLoginMode = true;
+                showAuthScreen();
+            };
+            document.getElementById('registerBtn').onclick = () => {
+                selectedRole = 'student';
+                isLoginMode = false;
+                showAuthScreen();
+            };
+            document.getElementById('logoutBtn').onclick = logout;
+            
+            // Modal cancel buttons
+            document.getElementById('cancelCreateCourse').onclick = () => hideModal('createCourseModal');
+            document.getElementById('cancelEditCourse').onclick = () => hideModal('editCourseModal');
+            document.getElementById('cancelCreateAssignment').onclick = () => hideModal('createAssignmentModal');
+            document.getElementById('cancelEditAssignment').onclick = () => hideModal('editAssignmentModal');
+            document.getElementById('cancelSubmitAssignment').onclick = () => hideModal('submitAssignmentModal');
+            
+            // Dashboard buttons
+            document.getElementById('createCourseBtn').onclick = () => showModal('createCourseModal');
+            document.getElementById('editCourseBtn').onclick = () => {
+                document.getElementById('editCourseTitle').value = currentCourse.title;
+                document.getElementById('editCourseDesc').value = currentCourse.description;
+                document.getElementById('editCourseDuration').value = currentCourse.duration;
+                showModal('editCourseModal');
+            };
+            document.getElementById('viewSubmissionsBtn').onclick = () => {
+                showView('submissionsView');
+                renderSubmissions();
+            };
+            document.getElementById('manageCoursesBtn').onclick = () => updateUI();
+            
+            // Navigation buttons
+            document.getElementById('backToDashboard').onclick = () => updateUI();
+            document.getElementById('backFromSubmissions').onclick = () => updateUI();
+            
+            // Forum
+            document.getElementById('postMessageBtn').onclick = postMessage;
+            
+            // Materials
+            document.getElementById('uploadMaterialBtn').onclick = uploadMaterial;
+            
+            // Forms
+            document.getElementById('loginForm').onsubmit = function(e) {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                if (login(email, password)) {
+                    this.reset();
+                }
+            };
+            
+            document.getElementById('registerForm').onsubmit = function(e) {
+                e.preventDefault();
+                const name = document.getElementById('regName').value;
+                const email = document.getElementById('regEmail').value;
+                const password = document.getElementById('regPassword').value;
+                const confirmPassword = document.getElementById('regConfirmPassword').value;
+                
+                if (register(name, email, password, confirmPassword)) {
+                    this.reset();
+                }
+            };
+            
+            document.getElementById('createCourseForm').onsubmit = function(e) {
+                e.preventDefault();
+                const title = document.getElementById('courseTitle').value;
+                const description = document.getElementById('courseDesc').value;
+                const duration = parseInt(document.getElementById('courseDurationInput').value);
+                
+                createCourse(title, description, duration);
+                hideModal('createCourseModal');
+                this.reset();
+            };
+            
+            document.getElementById('editCourseForm').onsubmit = function(e) {
+                e.preventDefault();
+                const title = document.getElementById('editCourseTitle').value;
+                const description = document.getElementById('editCourseDesc').value;
+                const duration = parseInt(document.getElementById('editCourseDuration').value);
+                
+                editCourse(currentCourse.id, title, description, duration);
+                hideModal('editCourseModal');
+                this.reset();
+            };
+            
+            document.getElementById('createAssignmentForm').onsubmit = function(e) {
+                e.preventDefault();
+                const title = document.getElementById('assignmentTitle').value;
+                const description = document.getElementById('assignmentDesc').value;
+                const dueDate = document.getElementById('assignmentDueDate').value;
+                const maxPoints = parseInt(document.getElementById('assignmentMaxPoints').value);
+                
+                createAssignment(currentCourse.id, title, description, dueDate, maxPoints);
+                hideModal('createAssignmentModal');
+                this.reset();
+            };
+            
+            document.getElementById('editAssignmentForm').onsubmit = function(e) {
+                e.preventDefault();
+                const title = document.getElementById('editAssignmentTitle').value;
+                const description = document.getElementById('editAssignmentDesc').value;
+                const dueDate = document.getElementById('editAssignmentDueDate').value;
+                const maxPoints = parseInt(document.getElementById('editAssignmentMaxPoints').value);
+                
+                editAssignment(currentEditingAssignment.id, title, description, dueDate, maxPoints);
+                hideModal('editAssignmentModal');
+                this.reset();
+            };
+            
+            document.getElementById('submitAssignmentForm').onsubmit = function(e) {
+                e.preventDefault();
+                const submissionText = document.getElementById('submissionText').value;
+                const fileInput = document.getElementById('submissionFile');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    showNotification('Please select a file to submit.', 'error');
+                    return;
+                }
+                
+                submitAssignment(currentAssignment.id, submissionText, file);
+                this.reset();
+            };
+            
+            // Close notification dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                const dropdown = document.getElementById('notificationDropdown');
+                const bell = document.getElementById('notificationBell');
+                
+                if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+            
+            // Initialize UI
+            updateUI();
+            
+            // Check for notifications periodically
+            setInterval(updateNotifications, 60000); // Check every minute
+        });
+
+        // Global functions for onclick handlers
+        window.selectRole = selectRole;
+        window.enrollInCourse = enrollInCourse;
+        window.showCourseDetail = showCourseDetail;
+        window.showCreateAssignmentModal = showCreateAssignmentModal;
+        window.showEditAssignmentModal = showEditAssignmentModal;
+        window.showSubmitAssignmentModal = showSubmitAssignmentModal;
+        window.viewAssignmentSubmissions = viewAssignmentSubmissions;
+        window.showGradeModal = showGradeModal;
+        window.downloadMaterial = downloadMaterial;
+        window.toggleNotifications = toggleNotifications;
+        window.markNotificationRead = markNotificationRead;
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98f1ccae05dc4425',t:'MTc2MDU1NzM0NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
